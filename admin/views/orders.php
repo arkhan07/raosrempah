@@ -138,6 +138,8 @@ if ($action === 'detail' && $order_no):
 else:
     $cancel_status = sanitize_text_field($_GET['cancel'] ?? '');
     $cancel_msg = sanitize_text_field($_GET['msg'] ?? '');
+
+    // Orders that were successfully synced to Komerce
     $wc_orders = wc_get_orders(array(
         'meta_key' => '_komerce_order_no',
         'meta_compare' => '!=',
@@ -146,6 +148,19 @@ else:
         'orderby' => 'date',
         'order' => 'DESC',
     ));
+
+    // Orders that failed auto-creation (have error meta but no komerce order no)
+    $failed_orders = wc_get_orders(array(
+        'meta_key' => '_komerce_last_error',
+        'meta_compare' => '!=',
+        'meta_value' => '',
+        'status' => array('wc-processing', 'wc-on-hold'),
+        'limit' => 20,
+        'orderby' => 'date',
+        'order' => 'DESC',
+    ));
+    // Filter out any that actually have a komerce order no (edge case)
+    $failed_orders = array_filter($failed_orders, fn($o) => !$o->get_meta('_komerce_order_no'));
 ?>
 <div class="wrap">
     <!-- Header -->
@@ -165,6 +180,45 @@ else:
         <div class="notice notice-error is-dismissible tw-mb-4"><p>❌ Gagal cancel: <?php echo esc_html(urldecode($cancel_msg)); ?></p></div>
     <?php endif; ?>
 
+    <!-- Failed / Needs Attention -->
+    <?php if (!empty($failed_orders)): ?>
+    <div class="tw-bg-white tw-rounded-xl tw-shadow-sm tw-mb-4" style="border:1px solid #fca5a5">
+        <div class="tw-flex tw-items-center tw-justify-between tw-px-5 tw-py-3" style="background:#fef2f2;border-bottom:1px solid #fca5a5;border-radius:12px 12px 0 0">
+            <span class="tw-text-sm tw-font-semibold tw-text-red-700">⚠️ Order Gagal Terkirim ke Komerce (<?php echo count($failed_orders); ?>)</span>
+            <span class="tw-text-xs tw-text-red-500">Buka tiap order → klik tombol "Buat Order Komerce"</span>
+        </div>
+        <table class="wp-list-table widefat fixed striped" style="border-radius:0 0 12px 12px;overflow:hidden">
+            <thead>
+                <tr style="background:#fff5f5">
+                    <th class="tw-text-xs tw-text-gray-500" style="width:90px">WC Order</th>
+                    <th class="tw-text-xs tw-text-gray-500">Customer</th>
+                    <th class="tw-text-xs tw-text-gray-500">Alasan Gagal</th>
+                    <th class="tw-text-xs tw-text-gray-500" style="width:80px">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($failed_orders as $fo):
+                $fo_err = $fo->get_meta('_komerce_last_error');
+            ?>
+                <tr>
+                    <td>
+                        <a href="<?php echo esc_url($fo->get_edit_order_url()); ?>" style="color:#dc2626;font-weight:600;text-decoration:none">
+                            #<?php echo esc_html($fo->get_order_number()); ?>
+                        </a>
+                    </td>
+                    <td class="tw-text-sm"><?php echo esc_html($fo->get_billing_first_name() . ' ' . $fo->get_billing_last_name()); ?></td>
+                    <td class="tw-text-xs tw-text-red-600"><?php echo esc_html(wp_trim_words($fo_err, 12)); ?></td>
+                    <td>
+                        <a href="<?php echo esc_url($fo->get_edit_order_url()); ?>" class="button button-small">Perbaiki</a>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+    <?php endif; ?>
+
+    <!-- Synced Orders -->
     <div class="tw-bg-white tw-rounded-xl tw-shadow-sm" style="border:1px solid #e5e7eb">
         <?php if (empty($wc_orders)): ?>
             <div class="tw-text-center tw-py-16 tw-text-gray-400">

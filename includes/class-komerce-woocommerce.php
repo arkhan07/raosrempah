@@ -30,11 +30,17 @@ if (!class_exists('Komerce_Shipping_Method')):
         {
             $this->init_form_fields();
             $this->init_settings();
-            $this->title = $this->get_option('title', 'Komerce Shipping');
+            $this->title   = $this->get_option('title', 'Komerce Shipping');
             $this->enabled = $this->get_option('enabled');
             add_action('woocommerce_update_options_shipping_' . $this->id, array($this, 'process_admin_options'));
+
+            // Destination capture — classic checkout
             add_action('woocommerce_checkout_process', array($this, 'validate_destination_id'));
+            // Primary: fires during order creation with order object + $_POST still available
+            add_action('woocommerce_checkout_create_order', array($this, 'save_destination_on_create'), 5, 2);
+            // Fallback: fires after order processed
             add_action('woocommerce_checkout_order_processed', array($this, 'save_destination_id'), 10, 3);
+
             add_filter('woocommerce_checkout_fields', array($this, 'add_destination_hidden_field'));
             add_action('woocommerce_review_order_before_shipping', array($this, 'render_destination_search'));
         }
@@ -133,6 +139,24 @@ if (!class_exists('Komerce_Shipping_Method')):
             echo '<p id="komerce-dest-selected" style="margin:6px 0 0;font-size:13px;color:#2271b1"></p>';
             echo '</div>';
             echo '</td></tr>';
+        }
+
+        /**
+         * Hook: woocommerce_checkout_create_order (priority 5)
+         * Most reliable: $_POST still available, order object writable.
+         */
+        public function save_destination_on_create($order, $data)
+        {
+            $dest_id = intval($_POST['komerce_receiver_destination_id'] ?? 0);
+            if (!$dest_id && WC()->session) {
+                $dest_id = intval(WC()->session->get('komerce_receiver_destination_id') ?? 0);
+            }
+            if ($dest_id) {
+                $order->update_meta_data('_komerce_receiver_destination_id', $dest_id);
+                if (WC()->session) {
+                    WC()->session->set('komerce_receiver_destination_id', null);
+                }
+            }
         }
 
         /**
