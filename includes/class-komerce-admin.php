@@ -15,12 +15,53 @@ class Komerce_Admin
     {
         add_action('admin_menu', array($this, 'register_menu'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
+        add_action('admin_head', array($this, 'inject_tailwind_cdn'));
         add_action('admin_post_komerce_save_settings', array($this, 'save_settings'));
         add_action('admin_post_komerce_request_pickup', array($this, 'handle_pickup'));
         add_action('admin_post_komerce_cancel_order', array($this, 'handle_cancel_order'));
         add_action('wp_ajax_komerce_admin_track', array($this, 'ajax_admin_track'));
         add_action('wp_ajax_komerce_admin_search_dest', array($this, 'ajax_admin_search_dest'));
         add_action('wp_ajax_komerce_admin_print_label', array($this, 'ajax_print_label'));
+    }
+
+    /**
+     * Inject Tailwind CDN with prefix config on komerce pages only (avoids WP admin conflicts)
+     */
+    public function inject_tailwind_cdn()
+    {
+        $screen = get_current_screen();
+        if (!$screen) {
+            return;
+        }
+        $id = $screen->id;
+        if (
+            strpos($id, 'komerce') === false
+            && strpos($id, 'shop_order') === false
+            && strpos($id, 'wc-orders') === false
+        ) {
+            return;
+        }
+        ?>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+        tailwind.config = {
+            prefix: 'tw-',
+            corePlugins: { preflight: false },
+            theme: {
+                extend: {
+                    colors: {
+                        komerce: {
+                            50:  '#fff8f0',
+                            100: '#fff1e0',
+                            500: '#e65c00',
+                            600: '#c04f00',
+                        }
+                    }
+                }
+            }
+        }
+        </script>
+        <?php
     }
 
     // ─── Menu ─────────────────────────────────────────────────────────────────

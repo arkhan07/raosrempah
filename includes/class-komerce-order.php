@@ -40,24 +40,33 @@ class Komerce_Order
 
         $payload = $this->build_order_payload($wc_order, $settings);
         if (!$payload) {
-            $wc_order->add_order_note('[Komerce] Gagal membuat order: data pengiriman tidak lengkap.');
+            $wc_order->add_order_note('[Komerce] Gagal membuat order: destination ID pembeli tidak ditemukan. Pastikan metode pengiriman Komerce digunakan saat checkout.');
+            $wc_order->save();
             return;
         }
 
         $api = new Komerce_API();
-        $result = $api->create_order($payload);
+        if (!$api->is_configured()) {
+            $wc_order->add_order_note('[Komerce] Gagal membuat order: API key belum dikonfigurasi.');
+            $wc_order->save();
+            return;
+        }
 
-        if (isset($result['meta']['code']) && in_array($result['meta']['code'], array(200, 201))) {
+        $result = $api->create_order($payload);
+        error_log('[Komerce] create_order WC#' . $wc_order_id . ' result: ' . wp_json_encode($result));
+
+        $code = $result['meta']['code'] ?? 0;
+        if (in_array((int)$code, array(200, 201), true)) {
             $order_no = $result['data']['order_no'] ?? '';
             $order_id = $result['data']['order_id'] ?? '';
             $wc_order->update_meta_data('_komerce_order_no', $order_no);
             $wc_order->update_meta_data('_komerce_order_id', $order_id);
             $wc_order->save_meta_data();
             $wc_order->add_order_note(sprintf('[Komerce] Order berhasil dibuat. No: %s', $order_no));
-        }
-        else {
+        } else {
             $msg = $result['meta']['message'] ?? 'Unknown error';
-            $wc_order->add_order_note(sprintf('[Komerce] Gagal membuat order: %s', $msg));
+            $wc_order->add_order_note(sprintf('[Komerce] Gagal membuat order (kode %s): %s', $code, $msg));
+            $wc_order->save();
         }
     }
 
@@ -69,6 +78,7 @@ class Komerce_Order
         // Get destination ID via WC Order meta API (HPOS compatible)
         $receiver_dest_id = $wc_order->get_meta('_komerce_receiver_destination_id');
         if (!$receiver_dest_id) {
+            error_log('[Komerce] Missing _komerce_receiver_destination_id on WC order #' . $wc_order->get_id());
             return false; // Destination ID must be set during checkout
         }
 
@@ -89,7 +99,7 @@ class Komerce_Order
 
             $items[] = array(
                 'product_name' => $product->get_name(),
-                'product_variant_name' => $item->get_variation_id() ? implode(', ', array_values($item->get_meta('pa_', false))) : '',
+                'product_variant_name' => $item->get_variation_id() ? $this->get_variation_label($item) : '',
                 'product_price' => (int)$product->get_price(),
                 'product_width' => (int)($product->get_width() ?: 10),
                 'product_height' => (int)($product->get_height() ?: 10),
@@ -106,7 +116,6 @@ class Komerce_Order
         $shipping_cost = (int)$wc_order->get_shipping_total();
 
         foreach ($shipping_methods as $method) {
-            $meta = $method->get_meta_data();
             $chosen_shipping = $method->get_meta('komerce_courier') ?: strtoupper($method->get_method_id());
             $chosen_type = $method->get_meta('komerce_service') ?: '';
             break;
@@ -116,6 +125,16 @@ class Komerce_Order
         $is_cod = (strpos($payment_method, 'COD') !== false || strpos($payment_method, 'TUNAI') !== false);
         $grand_total = (int)$wc_order->get_total();
 
+        $receiver_name = trim($wc_order->get_shipping_first_name() . ' ' . $wc_order->get_shipping_last_name());
+        if (empty($receiver_name)) {
+            $receiver_name = trim($wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name());
+        }
+
+        $receiver_address = trim($wc_order->get_shipping_address_1() . ' ' . $wc_order->get_shipping_address_2());
+        if (empty($receiver_address)) {
+            $receiver_address = trim($wc_order->get_billing_address_1() . ' ' . $wc_order->get_billing_address_2());
+        }
+
         return array(
             'order_date' => current_time('Y-m-d H:i:s'),
             'brand_name' => $settings['shipper_name'] ?? get_bloginfo('name'),
@@ -123,11 +142,13 @@ class Komerce_Order
             'shipper_phone' => $settings['shipper_phone'] ?? '',
             'shipper_destination_id' => (int)($settings['shipper_dest_id'] ?? 0),
             'shipper_address' => $settings['shipper_address'] ?? '',
+            'origin_pin_point' => '',
             'shipper_email' => $settings['shipper_email'] ?? get_bloginfo('admin_email'),
-            'receiver_name' => $wc_order->get_shipping_first_name() . ' ' . $wc_order->get_shipping_last_name(),
+            'receiver_name' => $receiver_name,
             'receiver_phone' => $wc_order->get_billing_phone(),
             'receiver_destination_id' => (int)$receiver_dest_id,
-            'receiver_address' => trim($wc_order->get_shipping_address_1() . ' ' . $wc_order->get_shipping_address_2()),
+            'receiver_address' => $receiver_address,
+            'destination_pin_point' => '',
             'shipping' => $chosen_shipping,
             'shipping_type' => $chosen_type,
             'shipping_cost' => $shipping_cost,
@@ -140,6 +161,23 @@ class Komerce_Order
             'insurance_value' => 0,
             'order_details' => $items,
         );
+    }
+
+    /**
+     * Get product variation label from order item meta data
+     */
+    private function get_variation_label($item)
+    {
+        $attrs = array();
+        foreach ($item->get_meta_data() as $meta) {
+            $key = $meta->key;
+            if (strpos($key, 'pa_') === 0 || strpos($key, 'attribute_') === 0) {
+                if (!empty($meta->value)) {
+                    $attrs[] = $meta->value;
+                }
+            }
+        }
+        return implode(', ', $attrs);
     }
 
     /**
@@ -240,17 +278,17 @@ class Komerce_Order
         $api = new Komerce_API();
         $result = $api->create_order($payload);
 
-        if (isset($result['meta']['code']) && in_array($result['meta']['code'], array(200, 201))) {
+        $code = $result['meta']['code'] ?? 0;
+        if (in_array((int)$code, array(200, 201), true)) {
             $order_no = $result['data']['order_no'] ?? '';
             $wc_order->update_meta_data('_komerce_order_no', $order_no);
             $wc_order->update_meta_data('_komerce_order_id', $result['data']['order_id'] ?? '');
             $wc_order->save_meta_data();
             $wc_order->add_order_note('[Komerce] Order manual dibuat. No: ' . $order_no);
             wp_safe_redirect(add_query_arg('komerce_msg', 'order_created', wp_get_referer()));
-        }
-        else {
+        } else {
             $error_msg = $result['meta']['message'] ?? 'Unknown error';
-            $wc_order->add_order_note('[Komerce] Gagal buat order: ' . $error_msg);
+            $wc_order->add_order_note(sprintf('[Komerce] Gagal buat order (kode %s): %s', $code, $error_msg));
             wp_safe_redirect(add_query_arg('komerce_msg', 'order_failed', wp_get_referer()));
         }
         exit;

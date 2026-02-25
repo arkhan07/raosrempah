@@ -1,8 +1,11 @@
 /* ============================================================
    RajaOngkir Komerce - Admin Styles
+   Structural layout is handled by Tailwind (tw- prefix).
+   This file contains only styles for JS-generated content
+   and WordPress-specific overrides.
    ============================================================ */
 
-/* ── Variables ─────────────────────────────────────── */
+/* ── Brand Variables ────────────────────────────────── */
 :root {
     --komerce-primary: #e65c00;
     --komerce-primary-dark: #c04f00;
@@ -10,152 +13,47 @@
     --komerce-accent: #fff3e0;
     --komerce-text: #1d2327;
     --komerce-muted: #646970;
-    --komerce-border: #e0e0e0;
-    --komerce-card-bg: #ffffff;
-    --komerce-success: #46b450;
-    --komerce-error: #dc3232;
+    --komerce-border: #e5e7eb;
+    --komerce-success: #16a34a;
+    --komerce-error: #dc2626;
     --komerce-warning: #f0b849;
-    --komerce-radius: 10px;
-    --komerce-shadow: 0 2px 12px rgba(0,0,0,.07);
 }
 
-/* ── Wrap & Header ─────────────────────────────────── */
-.komerce-wrap { max-width: 1200px; }
+/* ── Status Indicators (also used by JS) ────────────── */
+.komerce-status {
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+}
+.status-ok      { background: #f0fdf4; color: #15803d; border-left: 4px solid #4ade80; }
+.status-error   { background: #fef2f2; color: #b91c1c; border-left: 4px solid #f87171; }
+.status-warning { background: #fffbeb; color: #b45309; border-left: 4px solid #fbbf24; }
 
-.komerce-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px 0 16px;
-    border-bottom: 2px solid var(--komerce-border);
-    margin-bottom: 24px;
-}
-.komerce-header h1 {
-    margin: 0;
-    font-size: 22px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.komerce-logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-.komerce-logo .dashicons {
-    font-size: 32px;
-    width: 32px;
-    height: 32px;
-    color: var(--komerce-primary);
-}
-.komerce-logo h1 { font-size: 24px; }
-.komerce-logo h1 span { color: var(--komerce-primary); }
-.komerce-tagline { color: var(--komerce-muted); margin: 0 0 16px; }
-
-/* ── Cards ─────────────────────────────────────────── */
-.komerce-card {
-    background: var(--komerce-card-bg);
-    border: 1px solid var(--komerce-border);
-    border-radius: var(--komerce-radius);
-    padding: 24px;
-    box-shadow: var(--komerce-shadow);
-    margin-bottom: 20px;
-}
-.komerce-card h2, .komerce-card h3 {
-    margin-top: 0;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--komerce-border);
-}
-
-.komerce-card-grid {
-    display: grid;
-    grid-template-columns: 1fr 340px;
-    gap: 20px;
-    align-items: start;
-}
-.komerce-card-main {}
-.komerce-card-side {}
-
-@media (max-width: 900px) {
-    .komerce-card-grid { grid-template-columns: 1fr; }
-}
-
-/* ── Section Title ─────────────────────────────────── */
-.komerce-section-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--komerce-text);
-    margin: 0 0 16px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid var(--komerce-accent);
-}
-
-/* ── Mode Toggle ───────────────────────────────────── */
-.komerce-mode-toggle {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
-}
-.komerce-toggle-label {
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.komerce-toggle-label input { margin: 0; }
-
-/* ── Badges ────────────────────────────────────────── */
+/* ── Badges (also used by JS) ───────────────────────── */
 .komerce-badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 999px;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 .badge-sandbox { background: #fff3e0; color: #e65c00; border: 1px solid #f89820; }
-.badge-live    { background: #e8f5e9; color: #2e7d32; border: 1px solid #4caf50; }
-.badge-status  { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+.badge-live    { background: #f0fdf4; color: #15803d; border: 1px solid #4ade80; }
+.badge-status  { background: #eff6ff; color: #1d4ed8; border: 1px solid #93c5fd; }
 
-/* ── Status Indicators ─────────────────────────────── */
-.komerce-status {
-    padding: 12px 16px;
-    border-radius: 8px;
-    font-weight: 600;
-    margin-bottom: 12px;
-    font-size: 13px;
-}
-.status-ok      { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #4caf50; }
-.status-error   { background: #fce4e4; color: #b71c1c; border-left: 4px solid #ef5350; }
-.status-warning { background: #fff8e1; color: #e65100; border-left: 4px solid #ffa726; }
-
-/* ── Save Button ───────────────────────────────────── */
-.komerce-btn-save {
-    background: linear-gradient(135deg, var(--komerce-primary), var(--komerce-secondary)) !important;
-    border-color: var(--komerce-primary-dark) !important;
-    color: #fff !important;
-    border-radius: 8px !important;
-    padding: 8px 28px !important;
-    height: auto !important;
-    font-size: 14px !important;
-}
-.komerce-btn-save:hover { opacity: .9; }
-.komerce-btn-danger {
-    background: var(--komerce-error) !important;
-    border-color: #aa0000 !important;
-    color: #fff !important;
-}
-
-/* ── Autocomplete ──────────────────────────────────── */
+/* ── Autocomplete Dropdown (positioned by JS) ────────── */
 .komerce-autocomplete-list {
     list-style: none;
     padding: 0;
     margin: 0;
     border: 1px solid var(--komerce-border);
-    border-radius: 6px;
+    border-radius: 8px;
     background: #fff;
-    box-shadow: var(--komerce-shadow);
+    box-shadow: 0 4px 20px rgba(0,0,0,.1);
     position: absolute;
     z-index: 9999;
     min-width: 320px;
@@ -164,103 +62,57 @@
     display: none;
 }
 .komerce-autocomplete-list li {
-    padding: 10px 14px;
+    padding: 9px 14px;
     cursor: pointer;
     font-size: 13px;
-    border-bottom: 1px solid #f5f5f5;
-    transition: background .15s;
+    border-bottom: 1px solid #f9fafb;
+    transition: background .12s;
 }
 .komerce-autocomplete-list li:hover,
-.komerce-autocomplete-list li.is-active { background: var(--komerce-accent); }
+.komerce-autocomplete-list li.is-active { background: #fff8f0; }
+.komerce-autocomplete-list li strong { display: block; color: var(--komerce-text); }
 .komerce-autocomplete-list li span { display: block; color: var(--komerce-muted); font-size: 11px; }
 
-/* ── Detail Table ──────────────────────────────────── */
-.komerce-detail-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 16px;
-}
-@media (max-width: 900px) { .komerce-detail-grid { grid-template-columns: 1fr; } }
+/* ── Detail Table (used in orders detail view) ───────── */
 .komerce-detail-table { width: 100%; border-collapse: collapse; }
-.komerce-detail-table th, .komerce-detail-table td { padding: 7px 10px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
-.komerce-detail-table th { width: 140px; color: var(--komerce-muted); font-weight: 600; }
+.komerce-detail-table th,
+.komerce-detail-table td { padding: 7px 10px; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
+.komerce-detail-table th { width: 130px; color: var(--komerce-muted); font-weight: 600; }
 
-/* ── Action Bar ────────────────────────────────────── */
-.komerce-action-bar {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    padding: 16px 0;
-    flex-wrap: wrap;
+/* ── Label Result Box ────────────────────────────────── */
+#komerce-label-result {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 14px;
 }
 
-/* ── Orders Table ──────────────────────────────────── */
-.komerce-orders-table td { vertical-align: middle; }
-.komerce-actions { white-space: nowrap; }
-.komerce-actions .button { margin-right: 4px; }
-
-/* ── Empty State ───────────────────────────────────── */
-.komerce-empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--komerce-muted);
-}
-.komerce-empty-state p { margin: 12px 0; font-size: 14px; }
-
-/* ── Pickup ────────────────────────────────────────── */
-.komerce-pickup-select-all { padding: 10px 0; border-bottom: 1px solid var(--komerce-border); margin-bottom: 8px; }
-.komerce-pickup-list { max-height: 360px; overflow-y: auto; }
-.komerce-pickup-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border: 1px solid var(--komerce-border);
-    border-radius: 8px;
-    margin-bottom: 6px;
-    cursor: pointer;
-    transition: background .15s;
-}
-.komerce-pickup-item:hover { background: var(--komerce-accent); }
-.komerce-pickup-item input { margin: 0; }
-.pickup-item-info { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 13px; }
-.pickup-komerce-no { color: var(--komerce-muted); font-family: monospace; }
-.pickup-customer { font-weight: 600; }
-.pickup-total { background: #f1f1f1; padding: 2px 8px; border-radius: 4px; }
-
-.manual-order-row { display: flex; gap: 8px; margin-bottom: 8px; }
-
-/* ── Tracking Timeline ─────────────────────────────── */
+/* ── Tracking Timeline (injected by JS) ─────────────── */
 .komerce-tracking-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
     padding-bottom: 12px;
     border-bottom: 1px solid var(--komerce-border);
 }
-.tracking-awb-label { font-size: 12px; color: var(--komerce-muted); }
-.tracking-awb-number { font-size: 18px; font-family: monospace; }
+.tracking-awb-label { font-size: 11px; color: var(--komerce-muted); display: block; }
+.tracking-awb-number { font-size: 17px; font-family: monospace; color: var(--komerce-text); }
 
 .komerce-timeline { position: relative; padding-left: 20px; }
 .komerce-timeline::before {
     content: '';
     position: absolute;
-    left: 7px;
-    top: 0; bottom: 0;
+    left: 7px; top: 0; bottom: 0;
     width: 2px;
     background: var(--komerce-border);
 }
-.timeline-item {
-    position: relative;
-    padding: 0 0 18px 24px;
-}
+.timeline-item { position: relative; padding: 0 0 18px 24px; }
 .timeline-item::before {
     content: '';
     position: absolute;
-    left: -7px;
-    top: 4px;
+    left: -7px; top: 4px;
     width: 14px; height: 14px;
     border-radius: 50%;
     background: var(--komerce-primary);
@@ -270,22 +122,4 @@
 .timeline-item.is-latest::before { background: var(--komerce-success); box-shadow: 0 0 0 2px var(--komerce-success); }
 .timeline-item-desc { font-weight: 600; font-size: 13px; color: var(--komerce-text); }
 .timeline-item-date { font-size: 12px; color: var(--komerce-muted); margin-top: 3px; }
-.timeline-item-status { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; background: var(--komerce-accent); color: var(--komerce-primary); margin-top: 3px; }
-
-.komerce-tracking-placeholder { text-align: center; padding: 40px 20px; color: #ccc; }
-
-/* ── Label Result ──────────────────────────────────── */
-.komerce-label-result {
-    background: #e8f5e9;
-    border-left: 4px solid var(--komerce-success);
-    border-radius: 8px;
-    padding: 16px;
-    margin-top: 16px;
-}
-.komerce-label-success { display: flex; align-items: flex-start; gap: 12px; }
-
-/* ── Link list in side card ────────────────────────── */
-.komerce-card-side ul { list-style: none; padding: 0; margin: 0; }
-.komerce-card-side ul li { padding: 5px 0; border-bottom: 1px solid #f5f5f5; }
-.komerce-card-side ul li a { text-decoration: none; color: var(--komerce-primary); }
-.komerce-card-side ul li a:hover { text-decoration: underline; }
+.timeline-item-status { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; background: #fff3e0; color: var(--komerce-primary); margin-top: 3px; }

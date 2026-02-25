@@ -167,13 +167,20 @@ if (!class_exists('Komerce_Shipping_Method')):
         }
 
         /**
-         * Save destination ID to order meta
+         * Save destination ID to order meta (HPOS-compatible)
          */
         public function save_destination_id($order_id, $posted_data, $order)
         {
             $dest_id = WC()->session->get('komerce_receiver_destination_id');
             if ($dest_id) {
-                update_post_meta($order_id, '_komerce_receiver_destination_id', intval($dest_id));
+                // Use WC Order API (HPOS-compatible), not update_post_meta()
+                if (!($order instanceof WC_Order)) {
+                    $order = wc_get_order($order_id);
+                }
+                if ($order) {
+                    $order->update_meta_data('_komerce_receiver_destination_id', intval($dest_id));
+                    $order->save();
+                }
                 WC()->session->set('komerce_receiver_destination_id', null);
             }
         }    }
